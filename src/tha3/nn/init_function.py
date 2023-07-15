@@ -3,7 +3,7 @@ from typing import Callable
 import torch
 from torch import zero_
 from torch.nn import Module
-from torch.nn.init import kaiming_normal_, xavier_normal_, normal_
+from torch.nn.init import kaiming_normal_, normal_, xavier_normal_
 
 
 def create_init_function(method: str = 'none') -> Callable[[Module], Module]:
@@ -40,7 +40,8 @@ class HeInitialization:
 
     def __call__(self, module: Module) -> Module:
         with torch.no_grad():
-            kaiming_normal_(module.weight, a=self.a, mode=self.mode, nonlinearity=self.nonlinearity)
+            kaiming_normal_(module.weight, a=self.a, mode=self.mode,
+                            nonlinearity=self.nonlinearity)
         return module
 
 
@@ -70,6 +71,7 @@ class ZeroInitialization:
         with torch.no_grad:
             zero_(module.weight)
         return module
+
 
 class NoInitialization:
     def __call__(self, module: Module) -> Module:

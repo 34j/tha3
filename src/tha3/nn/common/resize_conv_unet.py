@@ -1,8 +1,8 @@
-from typing import Optional, List
+from typing import List, Optional
 
 import torch
 from torch import Tensor
-from torch.nn import ModuleList, Module, Upsample
+from torch.nn import Module, ModuleList, Upsample
 
 from tha3.nn.common.conv_block_factory import ConvBlockFactory
 from tha3.nn.nonlinearity_factory import ReLUFactory
@@ -41,7 +41,8 @@ class ResizeConvUNet(Module):
     def __init__(self, args: ResizeConvUNetArgs):
         super().__init__()
         self.args = args
-        conv_block_factory = ConvBlockFactory(args.block_args, args.use_separable_convolution)
+        conv_block_factory = ConvBlockFactory(
+            args.block_args, args.use_separable_convolution)
 
         self.downsample_blocks = ModuleList()
         self.downsample_blocks.append(conv_block_factory.create_conv3_block(
@@ -66,7 +67,8 @@ class ResizeConvUNet(Module):
 
         self.bottleneck_blocks = ModuleList()
         for i in range(self.args.num_bottleneck_blocks):
-            self.bottleneck_blocks.append(conv_block_factory.create_resnet_block(current_channels, is_1x1=False))
+            self.bottleneck_blocks.append(
+                conv_block_factory.create_resnet_block(current_channels, is_1x1=False))
 
         self.output_image_sizes = [current_size]
         self.output_num_channels = [current_channels]
@@ -86,7 +88,8 @@ class ResizeConvUNet(Module):
             align_corners = None
         else:
             align_corners = False
-        self.double_resolution = Upsample(scale_factor=2, mode=args.upsample_mode, align_corners=align_corners)
+        self.double_resolution = Upsample(
+            scale_factor=2, mode=args.upsample_mode, align_corners=align_corners)
 
     def forward(self, feature: Tensor) -> List[Tensor]:
         downsampled_features = []
@@ -134,7 +137,6 @@ if __name__ == "__main__":
     outputs = module.forward(input)
     for output in outputs:
         print(output.shape)
-
 
     if True:
         repeat = 100

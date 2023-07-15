@@ -1,11 +1,11 @@
-from typing import List, Optional, Tuple, Dict, Callable
+from typing import Callable, Dict, List, Optional, Tuple
 
 import torch
 from torch import Tensor
 from torch.nn import Module
 
-from tha3.poser.poser import PoseParameterGroup, Poser
 from tha3.compute.cached_computation_func import TensorListCachedComputationFunc
+from tha3.poser.poser import PoseParameterGroup, Poser
 
 
 class GeneralPoser02(Poser):
@@ -69,7 +69,8 @@ class GeneralPoser02(Poser):
         if len(pose.shape) == 1:
             pose = pose.unsqueeze(0)
         if self.subrect is not None:
-            image = image[:, :, self.subrect[0][0]:self.subrect[0][1], self.subrect[1][0]:self.subrect[1][1]]
+            image = image[:, :, self.subrect[0][0]:self.subrect[0]
+                          [1], self.subrect[1][0]:self.subrect[1][1]]
         batch = [image, pose]
 
         outputs = {}

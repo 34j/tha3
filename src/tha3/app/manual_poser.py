@@ -4,17 +4,23 @@ import os
 import sys
 from typing import List
 
-sys.path.append(os.getcwd())
-
-import PIL.Image
 import numpy
+import PIL.Image
 import torch
 import wx
 
 from tha3.poser.modes.load_poser import load_poser
-from tha3.poser.poser import Poser, PoseParameterCategory, PoseParameterGroup
-from tha3.util import extract_pytorch_image_from_filelike, rgba_to_numpy_image, grid_change_to_numpy_image, \
-    rgb_to_numpy_image, resize_PIL_image, extract_PIL_image_from_filelike, extract_pytorch_image_from_PIL_image
+from tha3.poser.poser import PoseParameterCategory, PoseParameterGroup, Poser
+from tha3.util import (
+    extract_PIL_image_from_filelike,
+    extract_pytorch_image_from_PIL_image,
+    grid_change_to_numpy_image,
+    resize_PIL_image,
+    rgb_to_numpy_image,
+    rgba_to_numpy_image,
+)
+
+sys.path.append(os.getcwd())
 
 
 class MorphCategoryControlPanel(wx.Panel):
@@ -32,17 +38,21 @@ class MorphCategoryControlPanel(wx.Panel):
         title_text = wx.StaticText(self, label=title, style=wx.ALIGN_CENTER)
         self.sizer.Add(title_text, 0, wx.EXPAND)
 
-        self.param_groups = [group for group in param_groups if group.get_category() == pose_param_category]
-        self.choice = wx.Choice(self, choices=[group.get_group_name() for group in self.param_groups])
+        self.param_groups = [
+            group for group in param_groups if group.get_category() == pose_param_category]
+        self.choice = wx.Choice(
+            self, choices=[group.get_group_name() for group in self.param_groups])
         if len(self.param_groups) > 0:
             self.choice.SetSelection(0)
         self.choice.Bind(wx.EVT_CHOICE, self.on_choice_updated)
         self.sizer.Add(self.choice, 0, wx.EXPAND)
 
-        self.left_slider = wx.Slider(self, minValue=-1000, maxValue=1000, value=-1000, style=wx.HORIZONTAL)
+        self.left_slider = wx.Slider(
+            self, minValue=-1000, maxValue=1000, value=-1000, style=wx.HORIZONTAL)
         self.sizer.Add(self.left_slider, 0, wx.EXPAND)
 
-        self.right_slider = wx.Slider(self, minValue=-1000, maxValue=1000, value=-1000, style=wx.HORIZONTAL)
+        self.right_slider = wx.Slider(
+            self, minValue=-1000, maxValue=1000, value=-1000, style=wx.HORIZONTAL)
         self.sizer.Add(self.right_slider, 0, wx.EXPAND)
 
         self.checkbox = wx.CheckBox(self, label="Show")
@@ -87,10 +97,12 @@ class MorphCategoryControlPanel(wx.Panel):
         else:
             param_range = param_group.get_range()
             alpha = (self.left_slider.GetValue() + 1000) / 2000.0
-            pose[param_index] = param_range[0] + (param_range[1] - param_range[0]) * alpha
+            pose[param_index] = param_range[0] + \
+                (param_range[1] - param_range[0]) * alpha
             if param_group.get_arity() == 2:
                 alpha = (self.right_slider.GetValue() + 1000) / 2000.0
-                pose[param_index + 1] = param_range[0] + (param_range[1] - param_range[0]) * alpha
+                pose[param_index + 1] = param_range[0] + \
+                    (param_range[1] - param_range[0]) * alpha
 
 
 class SimpleParamGroupsControlPanel(wx.Panel):
@@ -102,7 +114,8 @@ class SimpleParamGroupsControlPanel(wx.Panel):
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
 
-        self.param_groups = [group for group in param_groups if group.get_category() == pose_param_category]
+        self.param_groups = [
+            group for group in param_groups if group.get_category() == pose_param_category]
         for param_group in self.param_groups:
             assert not param_group.is_discrete()
             assert param_group.get_arity() == 1
@@ -116,7 +129,8 @@ class SimpleParamGroupsControlPanel(wx.Panel):
             range = param_group.get_range()
             min_value = int(range[0] * 1000)
             max_value = int(range[1] * 1000)
-            slider = wx.Slider(self, minValue=min_value, maxValue=max_value, value=0, style=wx.HORIZONTAL)
+            slider = wx.Slider(self, minValue=min_value,
+                               maxValue=max_value, value=0, style=wx.HORIZONTAL)
             self.sizer.Add(slider, 0, wx.EXPAND)
             self.sliders.append(slider)
 
@@ -130,21 +144,25 @@ class SimpleParamGroupsControlPanel(wx.Panel):
             slider = self.sliders[param_group_index]
             param_range = param_group.get_range()
             param_index = param_group.get_parameter_index()
-            alpha = (slider.GetValue() - slider.GetMin()) * 1.0 / (slider.GetMax() - slider.GetMin())
-            pose[param_index] = param_range[0] + (param_range[1] - param_range[0]) * alpha
+            alpha = (slider.GetValue() - slider.GetMin()) * \
+                1.0 / (slider.GetMax() - slider.GetMin())
+            pose[param_index] = param_range[0] + \
+                (param_range[1] - param_range[0]) * alpha
 
 
 def convert_output_image_from_torch_to_numpy(output_image):
     if output_image.shape[2] == 2:
         h, w, c = output_image.shape
-        numpy_image = torch.transpose(output_image.reshape(h * w, c), 0, 1).reshape(c, h, w)
+        numpy_image = torch.transpose(
+            output_image.reshape(h * w, c), 0, 1).reshape(c, h, w)
     elif output_image.shape[0] == 4:
         numpy_image = rgba_to_numpy_image(output_image)
     elif output_image.shape[0] == 3:
         numpy_image = rgb_to_numpy_image(output_image)
     elif output_image.shape[0] == 1:
         c, h, w = output_image.shape
-        alpha_image = torch.cat([output_image.repeat(3, 1, 1) * 2.0 - 1.0, torch.ones(1, h, w)], dim=0)
+        alpha_image = torch.cat([output_image.repeat(
+            3, 1, 1) * 2.0 - 1.0, torch.ones(1, h, w)], dim=0)
         numpy_image = rgba_to_numpy_image(alpha_image)
     elif output_image.shape[0] == 2:
         numpy_image = grid_change_to_numpy_image(output_image, num_channels=4)
@@ -194,7 +212,8 @@ class MainFrame(wx.Frame):
         self.source_image_dirty = True
 
     def init_left_panel(self):
-        self.control_panel = wx.Panel(self, style=wx.SIMPLE_BORDER, size=(self.image_size, -1))
+        self.control_panel = wx.Panel(
+            self, style=wx.SIMPLE_BORDER, size=(self.image_size, -1))
         self.left_panel = wx.Panel(self, style=wx.SIMPLE_BORDER)
         left_panel_sizer = wx.BoxSizer(wx.VERTICAL)
         self.left_panel.SetSizer(left_panel_sizer)
@@ -206,7 +225,8 @@ class MainFrame(wx.Frame):
         self.source_image_panel.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
         left_panel_sizer.Add(self.source_image_panel, 0, wx.FIXED_MINSIZE)
 
-        self.load_image_button = wx.Button(self.left_panel, wx.ID_ANY, "\nLoad Image\n\n")
+        self.load_image_button = wx.Button(
+            self.left_panel, wx.ID_ANY, "\nLoad Image\n\n")
         left_panel_sizer.Add(self.load_image_button, 1, wx.EXPAND)
         self.load_image_button.Bind(wx.EVT_BUTTON, self.load_image)
 
@@ -236,7 +256,8 @@ class MainFrame(wx.Frame):
         self.morph_control_panels = {}
         for category in morph_categories:
             param_groups = self.poser.get_pose_parameter_groups()
-            filtered_param_groups = [group for group in param_groups if group.get_category() == category]
+            filtered_param_groups = [
+                group for group in param_groups if group.get_category() == category]
             if len(filtered_param_groups) == 0:
                 continue
             control_panel = MorphCategoryControlPanel(
@@ -256,7 +277,8 @@ class MainFrame(wx.Frame):
         ]
         for category in non_morph_categories:
             param_groups = self.poser.get_pose_parameter_groups()
-            filtered_param_groups = [group for group in param_groups if group.get_category() == category]
+            filtered_param_groups = [
+                group for group in param_groups if group.get_category() == category]
             if len(filtered_param_groups) == 0:
                 continue
             control_panel = SimpleParamGroupsControlPanel(
@@ -287,7 +309,8 @@ class MainFrame(wx.Frame):
         right_panel_sizer.Add(self.result_image_panel, 0, wx.FIXED_MINSIZE)
         right_panel_sizer.Add(self.output_index_choice, 0, wx.EXPAND)
 
-        self.save_image_button = wx.Button(self.right_panel, wx.ID_ANY, "\nSave Image\n\n")
+        self.save_image_button = wx.Button(
+            self.right_panel, wx.ID_ANY, "\nSave Image\n\n")
         right_panel_sizer.Add(self.save_image_button, 1, wx.EXPAND)
         self.save_image_button.Bind(wx.EVT_BUTTON, self.on_save_image)
 
@@ -306,9 +329,11 @@ class MainFrame(wx.Frame):
 
     def load_image(self, event: wx.Event):
         dir_name = "data/images"
-        file_dialog = wx.FileDialog(self, "Choose an image", dir_name, "", "*.png", wx.FD_OPEN)
+        file_dialog = wx.FileDialog(self, "Choose an image",
+                                    dir_name, "", "*.png", wx.FD_OPEN)
         if file_dialog.ShowModal() == wx.ID_OK:
-            image_file_name = os.path.join(file_dialog.GetDirectory(), file_dialog.GetFilename())
+            image_file_name = os.path.join(
+                file_dialog.GetDirectory(), file_dialog.GetFilename())
             try:
                 pil_image = resize_PIL_image(extract_PIL_image_from_filelike(image_file_name),
                                              (self.poser.get_image_size(), self.poser.get_image_size()))
@@ -318,14 +343,16 @@ class MainFrame(wx.Frame):
                     self.wx_source_image = None
                     self.torch_source_image = None
                 else:
-                    self.wx_source_image = wx.Bitmap.FromBufferRGBA(w, h, pil_image.convert("RGBA").tobytes())
+                    self.wx_source_image = wx.Bitmap.FromBufferRGBA(
+                        w, h, pil_image.convert("RGBA").tobytes())
                     self.torch_source_image = extract_pytorch_image_from_PIL_image(pil_image)\
                         .to(self.device).to(self.dtype)
                 self.source_image_dirty = True
                 self.Refresh()
                 self.Update()
-            except:
-                message_dialog = wx.MessageDialog(self, "Could not load image " + image_file_name, "Poser", wx.OK)
+            except Exception as e:
+                message_dialog = wx.MessageDialog(
+                    self, "Could not load image " + image_file_name + str(e), "Poser", wx.OK)
                 message_dialog.ShowModal()
                 message_dialog.Destroy()
         file_dialog.Destroy()
@@ -344,7 +371,8 @@ class MainFrame(wx.Frame):
         font = wx.Font(wx.FontInfo(14).Family(wx.FONTFAMILY_SWISS))
         dc.SetFont(font)
         w, h = dc.GetTextExtent("Nothing yet!")
-        dc.DrawText("Nothing yet!", (self.image_size - w) // 2, (self.image_size - - h) // 2)
+        dc.DrawText("Nothing yet!", (self.image_size - w) //
+                    2, (self.image_size - - h) // 2)
 
         del dc
 
@@ -384,7 +412,8 @@ class MainFrame(wx.Frame):
         pose = torch.tensor(current_pose, device=self.device, dtype=self.dtype)
         output_index = self.output_index_choice.GetSelection()
         with torch.no_grad():
-            output_image = self.poser.pose(self.torch_source_image, pose, output_index)[0].detach().cpu()
+            output_image = self.poser.pose(self.torch_source_image, pose, output_index)[
+                0].detach().cpu()
 
         numpy_image = convert_output_image_from_torch_to_numpy(output_image)
         self.last_output_numpy_image = numpy_image
@@ -413,9 +442,11 @@ class MainFrame(wx.Frame):
             return
 
         dir_name = "data/images"
-        file_dialog = wx.FileDialog(self, "Choose an image", dir_name, "", "*.png", wx.FD_SAVE)
+        file_dialog = wx.FileDialog(self, "Choose an image",
+                                    dir_name, "", "*.png", wx.FD_SAVE)
         if file_dialog.ShowModal() == wx.ID_OK:
-            image_file_name = os.path.join(file_dialog.GetDirectory(), file_dialog.GetFilename())
+            image_file_name = os.path.join(
+                file_dialog.GetDirectory(), file_dialog.GetFilename())
             try:
                 if os.path.exists(image_file_name):
                     message_dialog = wx.MessageDialog(self, f"Override {image_file_name}", "Manual Poser",
@@ -426,8 +457,9 @@ class MainFrame(wx.Frame):
                     message_dialog.Destroy()
                 else:
                     self.save_last_numpy_image(image_file_name)
-            except:
-                message_dialog = wx.MessageDialog(self, f"Could not save {image_file_name}", "Manual Poser", wx.OK)
+            except Exception as e:
+                message_dialog = wx.MessageDialog(
+                    self, f"Could not save {image_file_name}" + str(e), "Manual Poser", wx.OK)
                 message_dialog.ShowModal()
                 message_dialog.Destroy()
         file_dialog.Destroy()
@@ -446,7 +478,8 @@ if __name__ == "__main__":
         type=str,
         required=False,
         default='standard_float',
-        choices=['standard_float', 'separable_float', 'standard_half', 'separable_half'],
+        choices=['standard_float', 'separable_float',
+                 'standard_half', 'separable_half'],
         help='The model to use.')
     args = parser.parse_args()
 

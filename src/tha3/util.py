@@ -2,8 +2,8 @@ import math
 import os
 from typing import List
 
-import PIL.Image
 import numpy
+import PIL.Image
 import torch
 from matplotlib import cm
 from torch import Tensor
@@ -34,7 +34,8 @@ def torch_linear_to_srgb(x):
 
 
 def image_linear_to_srgb(image):
-    assert image.shape[2] == 3 or image.shape[2] == 4
+    if not (image.shape[2] == 3 or image.shape[2] == 4):
+        raise ValueError()
     if image.shape[2] == 3:
         return numpy_linear_to_srgb(image)
     else:
@@ -45,7 +46,8 @@ def image_linear_to_srgb(image):
 
 
 def image_srgb_to_linear(image):
-    assert image.shape[2] == 3 or image.shape[2] == 4
+    if not (image.shape[2] == 3 or image.shape[2] == 4):
+        raise ValueError()
     if image.shape[2] == 3:
         return numpy_srgb_to_linear(image)
     else:
@@ -68,7 +70,8 @@ def load_rng_state(file_name):
 def grid_change_to_numpy_image(torch_image, num_channels=3):
     height = torch_image.shape[1]
     width = torch_image.shape[2]
-    size_image = (torch_image[0, :, :] ** 2 + torch_image[1, :, :] ** 2).sqrt().view(height, width, 1).numpy()
+    size_image = (torch_image[0, :, :] ** 2 + torch_image[1, :, :]
+                  ** 2).sqrt().view(height, width, 1).numpy()
     hsv = cm.get_cmap('hsv')
     angle_image = hsv(((torch.atan2(
         torch_image[0, :, :].view(height * width),
@@ -84,13 +87,15 @@ def grid_change_to_numpy_image(torch_image, num_channels=3):
 
 
 def rgb_to_numpy_image(torch_image: Tensor, min_pixel_value=-1.0, max_pixel_value=1.0):
-    assert torch_image.dim() == 3
-    assert torch_image.shape[0] == 3
+    if not (torch_image.dim() == 3 or torch_image.shape[0] == 3):
+        raise ValueError()
     height = torch_image.shape[1]
     width = torch_image.shape[2]
 
-    reshaped_image = torch_image.numpy().reshape(3, height * width).transpose().reshape(height, width, 3)
-    numpy_image = (reshaped_image - min_pixel_value) / (max_pixel_value - min_pixel_value)
+    reshaped_image = torch_image.numpy().reshape(
+        3, height * width).transpose().reshape(height, width, 3)
+    numpy_image = (reshaped_image - min_pixel_value) / \
+        (max_pixel_value - min_pixel_value)
     return numpy_linear_to_srgb(numpy_image)
 
 
@@ -103,10 +108,11 @@ def rgba_to_numpy_image_greenscreen(torch_image: Tensor,
 
     numpy_image = (torch_image.numpy().reshape(4, height * width).transpose().reshape(height, width,
                                                                                       4) - min_pixel_value) \
-                  / (max_pixel_value - min_pixel_value)
+        / (max_pixel_value - min_pixel_value)
     rgb_image = numpy_linear_to_srgb(numpy_image[:, :, 0:3])
     a_image = numpy_image[:, :, 3]
-    rgb_image[:, :, 0:3] = rgb_image[:, :, 0:3] * a_image.reshape(a_image.shape[0], a_image.shape[1], 1)
+    rgb_image[:, :, 0:3] = rgb_image[:, :, 0:3] * \
+        a_image.reshape(a_image.shape[0], a_image.shape[1], 1)
     rgb_image[:, :, 1] = rgb_image[:, :, 1] + (1 - a_image)
 
     if not include_alpha:
@@ -116,16 +122,19 @@ def rgba_to_numpy_image_greenscreen(torch_image: Tensor,
 
 
 def rgba_to_numpy_image(torch_image: Tensor, min_pixel_value=-1.0, max_pixel_value=1.0):
-    assert torch_image.dim() == 3
-    assert torch_image.shape[0] == 4
+    if not (torch_image.dim() == 3 or torch_image.shape[0] == 4):
+        raise ValueError()
     height = torch_image.shape[1]
     width = torch_image.shape[2]
 
-    reshaped_image = torch_image.numpy().reshape(4, height * width).transpose().reshape(height, width, 4)
-    numpy_image = (reshaped_image - min_pixel_value) / (max_pixel_value - min_pixel_value)
+    reshaped_image = torch_image.numpy().reshape(
+        4, height * width).transpose().reshape(height, width, 4)
+    numpy_image = (reshaped_image - min_pixel_value) / \
+        (max_pixel_value - min_pixel_value)
     rgb_image = numpy_linear_to_srgb(numpy_image[:, :, 0:3])
     a_image = numpy.clip(numpy_image[:, :, 3], 0.0, 1.0)
-    rgba_image = numpy.concatenate((rgb_image, a_image.reshape(height, width, 1)), axis=2)
+    rgba_image = numpy.concatenate(
+        (rgb_image, a_image.reshape(height, width, 1)), axis=2)
     return rgba_image
 
 
@@ -133,7 +142,7 @@ def extract_numpy_image_from_filelike_with_pytorch_layout(file, has_alpha=True, 
     try:
         pil_image = PIL.Image.open(file)
     except Exception as e:
-        raise RuntimeError(file)
+        raise RuntimeError(file) from e
     return extract_numpy_image_from_PIL_image_with_pytorch_layout(pil_image, has_alpha, scale, offset)
 
 
@@ -155,9 +164,9 @@ def extract_numpy_image_from_PIL_image_with_pytorch_layout(pil_image, has_alpha=
     image = (raw_image / 255.0).reshape(image_size, image_size, num_channel)
     image[:, :, 0:3] = numpy_srgb_to_linear(image[:, :, 0:3])
     image = image \
-                .reshape(image_size * image_size, num_channel) \
-                .transpose() \
-                .reshape(num_channel, image_size, image_size) * scale + offset
+        .reshape(image_size * image_size, num_channel) \
+        .transpose() \
+        .reshape(num_channel, image_size, image_size) * scale + offset
     return image
 
 
@@ -165,13 +174,15 @@ def extract_pytorch_image_from_filelike(file, has_alpha=True, scale=2.0, offset=
     try:
         pil_image = PIL.Image.open(file)
     except Exception as e:
-        raise RuntimeError(file)
-    image = extract_numpy_image_from_PIL_image_with_pytorch_layout(pil_image, has_alpha, scale, offset)
+        raise RuntimeError(file) from e
+    image = extract_numpy_image_from_PIL_image_with_pytorch_layout(
+        pil_image, has_alpha, scale, offset)
     return torch.from_numpy(image).float()
 
 
 def extract_pytorch_image_from_PIL_image(pil_image, has_alpha=True, scale=2.0, offset=-1.0):
-    image = extract_numpy_image_from_PIL_image_with_pytorch_layout(pil_image, has_alpha, scale, offset)
+    image = extract_numpy_image_from_PIL_image_with_pytorch_layout(
+        pil_image, has_alpha, scale, offset)
     return torch.from_numpy(image).float()
 
 
@@ -197,27 +208,27 @@ def convert_avs_to_avi(avs_file, avi_file):
     file.write("VirtualDub.Close();")
     file.close()
 
-    os.system("C:\\ProgramData\\chocolatey\\lib\\virtualdub\\tools\\vdub64.exe /i temp.vdub")
+    os.system("C:\\ProgramData\\chocolatey\\lib\\virtualdub\\tools\\vdub64.exe /i temp.vdub")  # nosec
 
     os.remove("temp.vdub")
 
 
 def convert_avi_to_mp4(avi_file, mp4_file):
     os.makedirs(os.path.dirname(mp4_file), exist_ok=True)
-    os.system("ffmpeg -y -i %s -c:v libx264 -preset slow -crf 22 -c:a libfaac -b:a 128k %s" % \
-              (avi_file, mp4_file))
+    os.system("ffmpeg -y -i %s -c:v libx264 -preset slow -crf 22 -c:a libfaac -b:a 128k %s" %
+              (avi_file, mp4_file))  # nosec
 
 
 def convert_avi_to_webm(avi_file, webm_file):
     os.makedirs(os.path.dirname(webm_file), exist_ok=True)
-    os.system("ffmpeg -y -i %s -vcodec libvpx -qmin 0 -qmax 50 -crf 10 -b:v 1M -acodec libvorbis %s" % \
-              (avi_file, webm_file))
+    os.system("ffmpeg -y -i %s -vcodec libvpx -qmin 0 -qmax 50 -crf 10 -b:v 1M -acodec libvorbis %s" %
+              (avi_file, webm_file))  # nosec
 
 
 def convert_mp4_to_webm(mp4_file, webm_file):
     os.makedirs(os.path.dirname(webm_file), exist_ok=True)
-    os.system("ffmpeg -y -i %s -vcodec libvpx -qmin 0 -qmax 50 -crf 10 -b:v 1M -acodec libvorbis %s" % \
-              (mp4_file, webm_file))
+    os.system("ffmpeg -y -i %s -vcodec libvpx -qmin 0 -qmax 50 -crf 10 -b:v 1M -acodec libvorbis %s" %
+              (mp4_file, webm_file))  # nosec
 
 
 def create_parent_dir(file_name):
@@ -226,7 +237,7 @@ def create_parent_dir(file_name):
 
 def run_command(command_parts: List[str]):
     command = " ".join(command_parts)
-    os.system(command)
+    os.system(command)  # nosec
 
 
 def save_pytorch_image(image, file_name):
@@ -234,10 +245,12 @@ def save_pytorch_image(image, file_name):
         image = image.squeeze()
     if image.shape[0] == 4:
         numpy_image = rgba_to_numpy_image(image.detach().cpu())
-        pil_image = PIL.Image.fromarray(numpy.uint8(numpy.rint(numpy_image * 255.0)), mode='RGBA')
+        pil_image = PIL.Image.fromarray(numpy.uint8(
+            numpy.rint(numpy_image * 255.0)), mode='RGBA')
     else:
         numpy_image = rgb_to_numpy_image(image.detach().cpu())
-        pil_image = PIL.Image.fromarray(numpy.uint8(numpy.rint(numpy_image * 255.0)), mode='RGB')
+        pil_image = PIL.Image.fromarray(numpy.uint8(
+            numpy.rint(numpy_image * 255.0)), mode='RGB')
     os.makedirs(os.path.dirname(file_name), exist_ok=True)
     pil_image.save(file_name)
 
@@ -267,12 +280,14 @@ def extract_PIL_image_from_filelike(file):
 def convert_output_image_from_torch_to_numpy(output_image):
     if output_image.shape[2] == 2:
         h, w, c = output_image.shape
-        output_image = torch.transpose(output_image.reshape(h * w, c), 0, 1).reshape(c, h, w)
+        output_image = torch.transpose(
+            output_image.reshape(h * w, c), 0, 1).reshape(c, h, w)
     if output_image.shape[0] == 4:
         numpy_image = rgba_to_numpy_image(output_image)
     elif output_image.shape[0] == 1:
         c, h, w = output_image.shape
-        alpha_image = torch.cat([output_image.repeat(3, 1, 1) * 2.0 - 1.0, torch.ones(1, h, w)], dim=0)
+        alpha_image = torch.cat([output_image.repeat(
+            3, 1, 1) * 2.0 - 1.0, torch.ones(1, h, w)], dim=0)
         numpy_image = rgba_to_numpy_image(alpha_image)
     elif output_image.shape[0] == 2:
         numpy_image = grid_change_to_numpy_image(output_image, num_channels=4)

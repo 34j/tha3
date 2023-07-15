@@ -1,6 +1,6 @@
 from typing import Optional
 
-from torch.nn import Module, ReLU, LeakyReLU, ELU, ReLU6, Hardswish, SiLU, Tanh, Sigmoid
+from torch.nn import ELU, Hardswish, LeakyReLU, Module, ReLU, ReLU6, Sigmoid, SiLU, Tanh
 
 from tha3.module.module_factory import ModuleFactory
 

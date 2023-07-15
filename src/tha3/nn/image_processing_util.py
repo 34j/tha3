@@ -20,7 +20,8 @@ def apply_grid_change(grid_change, image: Tensor) -> Tensor:
         device=device).unsqueeze(0).repeat(n, 1, 1)
     base_grid = affine_grid(identity, [n, c, h, w], align_corners=False)
     grid = base_grid + grid_change
-    resampled_image = grid_sample(image, grid, mode='bilinear', padding_mode='border', align_corners=False)
+    resampled_image = grid_sample(
+        image, grid, mode='bilinear', padding_mode='border', align_corners=False)
     return resampled_image
 
 
@@ -33,7 +34,8 @@ class GridChangeApplier:
     def apply(self, grid_change: Tensor, image: Tensor, align_corners: bool = False) -> Tensor:
         n, c, h, w = image.shape
         device = grid_change.device
-        grid_change = torch.transpose(grid_change.view(n, 2, h * w), 1, 2).view(n, h, w, 2)
+        grid_change = torch.transpose(
+            grid_change.view(n, 2, h * w), 1, 2).view(n, h, w, 2)
 
         if n == self.last_n and device == self.last_device:
             identity = self.last_identity
@@ -50,7 +52,8 @@ class GridChangeApplier:
         base_grid = affine_grid(identity, [n, c, h, w], align_corners=align_corners)
 
         grid = base_grid + grid_change
-        resampled_image = grid_sample(image, grid, mode='bilinear', padding_mode='border', align_corners=align_corners)
+        resampled_image = grid_sample(
+            image, grid, mode='bilinear', padding_mode='border', align_corners=align_corners)
         return resampled_image
 
 

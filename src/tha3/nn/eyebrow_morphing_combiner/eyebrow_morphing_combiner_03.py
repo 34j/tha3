@@ -4,10 +4,16 @@ import torch
 from torch import Tensor
 from torch.nn import Module
 
-from tha3.nn.common.poser_encoder_decoder_00 import PoserEncoderDecoder00Args
-from tha3.nn.common.poser_encoder_decoder_00_separable import PoserEncoderDecoder00Separable
-from tha3.nn.image_processing_util import apply_color_change, apply_rgb_change, GridChangeApplier
 from tha3.module.module_factory import ModuleFactory
+from tha3.nn.common.poser_encoder_decoder_00 import PoserEncoderDecoder00Args
+from tha3.nn.common.poser_encoder_decoder_00_separable import (
+    PoserEncoderDecoder00Separable,
+)
+from tha3.nn.image_processing_util import (
+    GridChangeApplier,
+    apply_color_change,
+    apply_rgb_change,
+)
 from tha3.nn.nonlinearity_factory import ReLUFactory
 from tha3.nn.normalization import InstanceNorm2dFactory
 from tha3.nn.util import BlockArgs
@@ -50,15 +56,19 @@ class EyebrowMorphingCombiner03(Module):
         combined_image = torch.cat([background_layer, eyebrow_layer], dim=1)
         feature = self.body(combined_image, pose)[0]
 
-        morphed_eyebrow_layer_grid_change = self.morphed_eyebrow_layer_grid_change(feature)
+        morphed_eyebrow_layer_grid_change = self.morphed_eyebrow_layer_grid_change(
+            feature)
         morphed_eyebrow_layer_alpha = self.morphed_eyebrow_layer_alpha(feature)
-        morphed_eyebrow_layer_color_change = self.morphed_eyebrow_layer_color_change(feature)
-        warped_eyebrow_layer = self.grid_change_applier.apply(morphed_eyebrow_layer_grid_change, eyebrow_layer)
+        morphed_eyebrow_layer_color_change = self.morphed_eyebrow_layer_color_change(
+            feature)
+        warped_eyebrow_layer = self.grid_change_applier.apply(
+            morphed_eyebrow_layer_grid_change, eyebrow_layer)
         morphed_eyebrow_layer = apply_color_change(
             morphed_eyebrow_layer_alpha, morphed_eyebrow_layer_color_change, warped_eyebrow_layer)
 
         combine_alpha = self.combine_alpha(feature)
-        eyebrow_image = apply_rgb_change(combine_alpha, morphed_eyebrow_layer, background_layer)
+        eyebrow_image = apply_rgb_change(
+            combine_alpha, morphed_eyebrow_layer, background_layer)
         eyebrow_image_no_combine_alpha = apply_rgb_change(
             (morphed_eyebrow_layer[:, 3:4, :, :] + 1.0) / 2.0, morphed_eyebrow_layer, background_layer)
 

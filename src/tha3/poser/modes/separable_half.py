@@ -1,27 +1,35 @@
 from enum import Enum
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 import torch
 from torch import Tensor
 from torch.nn import Module
 from torch.nn.functional import interpolate
 
-from tha3.nn.eyebrow_decomposer.eyebrow_decomposer_03 import EyebrowDecomposer03Factory, \
-    EyebrowDecomposer03Args, EyebrowDecomposer03
-from tha3.nn.eyebrow_morphing_combiner.eyebrow_morphing_combiner_03 import \
-    EyebrowMorphingCombiner03Factory, EyebrowMorphingCombiner03Args, EyebrowMorphingCombiner03
-from tha3.nn.face_morpher.face_morpher_09 import FaceMorpher09Factory, FaceMorpher09Args
-from tha3.poser.general_poser_02 import GeneralPoser02
-from tha3.poser.poser import PoseParameterCategory, PoseParameters
-from tha3.nn.editor.editor_07 import Editor07, Editor07Args
-from tha3.nn.two_algo_body_rotator.two_algo_face_body_rotator_05 import TwoAlgoFaceBodyRotator05, \
-    TwoAlgoFaceBodyRotator05Args
-from tha3.util import torch_load
 from tha3.compute.cached_computation_func import TensorListCachedComputationFunc
 from tha3.compute.cached_computation_protocol import CachedComputationProtocol
-from tha3.nn.nonlinearity_factory import ReLUFactory, LeakyReLUFactory
+from tha3.nn.editor.editor_07 import Editor07, Editor07Args
+from tha3.nn.eyebrow_decomposer.eyebrow_decomposer_03 import (
+    EyebrowDecomposer03,
+    EyebrowDecomposer03Args,
+    EyebrowDecomposer03Factory,
+)
+from tha3.nn.eyebrow_morphing_combiner.eyebrow_morphing_combiner_03 import (
+    EyebrowMorphingCombiner03,
+    EyebrowMorphingCombiner03Args,
+    EyebrowMorphingCombiner03Factory,
+)
+from tha3.nn.face_morpher.face_morpher_09 import FaceMorpher09Args, FaceMorpher09Factory
+from tha3.nn.nonlinearity_factory import LeakyReLUFactory, ReLUFactory
 from tha3.nn.normalization import InstanceNorm2dFactory
+from tha3.nn.two_algo_body_rotator.two_algo_face_body_rotator_05 import (
+    TwoAlgoFaceBodyRotator05,
+    TwoAlgoFaceBodyRotator05Args,
+)
 from tha3.nn.util import BlockArgs
+from tha3.poser.general_poser_02 import GeneralPoser02
+from tha3.poser.poser import PoseParameterCategory, PoseParameters
+from tha3.util import torch_load
 
 
 class Network(Enum):
@@ -63,7 +71,8 @@ class FiveStepPoserComputationProtocol(CachedComputationProtocol):
             elif batch[0].shape[0] != self.cached_batch_0.shape[0]:
                 new_batch_0 = True
             else:
-                new_batch_0 = torch.max((batch[0] - self.cached_batch_0).abs()).item() > 0
+                new_batch_0 = torch.max(
+                    (batch[0] - self.cached_batch_0).abs()).item() > 0
             if not new_batch_0:
                 outputs[Network.eyebrow_decomposer.outputs_key] = self.cached_eyebrow_decomposer_output
             output = self.get_output(Branch.all_outputs.name, modules, batch, outputs)
@@ -80,7 +89,8 @@ class FiveStepPoserComputationProtocol(CachedComputationProtocol):
             input_image = batch[0][:, :, 64:192, 64 + 128:192 + 128]
             return modules[Network.eyebrow_decomposer.name].forward(input_image)
         elif key == Network.eyebrow_morphing_combiner.outputs_key:
-            eyebrow_decomposer_output = self.get_output(Network.eyebrow_decomposer.outputs_key, modules, batch, outputs)
+            eyebrow_decomposer_output = self.get_output(
+                Network.eyebrow_decomposer.outputs_key, modules, batch, outputs)
             background_layer = eyebrow_decomposer_output[EyebrowDecomposer03.BACKGROUND_LAYER_INDEX]
             eyebrow_layer = eyebrow_decomposer_output[EyebrowDecomposer03.EYEBROW_LAYER_INDEX]
             eyebrow_pose = batch[1][:, :NUM_EYEBROW_PARAMS]
@@ -92,27 +102,34 @@ class FiveStepPoserComputationProtocol(CachedComputationProtocol):
             eyebrow_morphing_combiner_output = self.get_output(
                 Network.eyebrow_morphing_combiner.outputs_key, modules, batch, outputs)
             eyebrow_morphed_image = eyebrow_morphing_combiner_output[self.eyebrow_morphed_image_index]
-            input_image = batch[0][:, :, 32:32 + 192, (32 + 128):(32 + 192 + 128)].clone()
+            input_image = batch[0][:, :, 32:32 + 192,
+                                   (32 + 128):(32 + 192 + 128)].clone()
             input_image[:, :, 32:32 + 128, 32:32 + 128] = eyebrow_morphed_image
-            face_pose = batch[1][:, NUM_EYEBROW_PARAMS:NUM_EYEBROW_PARAMS + NUM_FACE_PARAMS]
+            face_pose = batch[1][:,
+                                 NUM_EYEBROW_PARAMS:NUM_EYEBROW_PARAMS + NUM_FACE_PARAMS]
             return modules[Network.face_morpher.name].forward(input_image, face_pose)
         elif key == Branch.face_morphed_full.name:
-            face_morpher_output = self.get_output(Network.face_morpher.outputs_key, modules, batch, outputs)
+            face_morpher_output = self.get_output(
+                Network.face_morpher.outputs_key, modules, batch, outputs)
             face_morphed_image = face_morpher_output[0]
             input_image = batch[0].clone()
             input_image[:, :, 32:32 + 192, 32 + 128:32 + 192 + 128] = face_morphed_image
             return [input_image]
         elif key == Branch.face_morphed_half.name:
-            face_morphed_full = self.get_output(Branch.face_morphed_full.name, modules, batch, outputs)[0]
+            face_morphed_full = self.get_output(
+                Branch.face_morphed_full.name, modules, batch, outputs)[0]
             return [
-                interpolate(face_morphed_full, size=(256, 256), mode='bilinear', align_corners=False)
+                interpolate(face_morphed_full, size=(256, 256),
+                            mode='bilinear', align_corners=False)
             ]
         elif key == Network.two_algo_face_body_rotator.outputs_key:
-            face_morphed_half = self.get_output(Branch.face_morphed_half.name, modules, batch, outputs)[0]
+            face_morphed_half = self.get_output(
+                Branch.face_morphed_half.name, modules, batch, outputs)[0]
             rotation_pose = batch[1][:, NUM_EYEBROW_PARAMS + NUM_FACE_PARAMS:]
             return modules[Network.two_algo_face_body_rotator.name].forward(face_morphed_half, rotation_pose)
         elif key == Network.editor.outputs_key:
-            input_original_image = self.get_output(Branch.face_morphed_full.name, modules, batch, outputs)[0]
+            input_original_image = self.get_output(
+                Branch.face_morphed_full.name, modules, batch, outputs)[0]
             rotator_outputs = self.get_output(
                 Network.two_algo_face_body_rotator.outputs_key, modules, batch, outputs)
             half_warped_image = rotator_outputs[TwoAlgoFaceBodyRotator05.WARPED_IMAGE_INDEX]
@@ -125,18 +142,21 @@ class FiveStepPoserComputationProtocol(CachedComputationProtocol):
             return modules[Network.editor.name].forward(
                 input_original_image, full_warped_image, full_grid_change, rotation_pose)
         elif key == Branch.all_outputs.name:
-            editor_output = self.get_output(Network.editor.outputs_key, modules, batch, outputs)
-            rotater_output = self.get_output(Network.two_algo_face_body_rotator.outputs_key, modules, batch, outputs)
-            face_morpher_output = self.get_output(Network.face_morpher.outputs_key, modules, batch, outputs)
+            editor_output = self.get_output(
+                Network.editor.outputs_key, modules, batch, outputs)
+            rotater_output = self.get_output(
+                Network.two_algo_face_body_rotator.outputs_key, modules, batch, outputs)
+            face_morpher_output = self.get_output(
+                Network.face_morpher.outputs_key, modules, batch, outputs)
             eyebrow_morphing_combiner_output = self.get_output(
                 Network.eyebrow_morphing_combiner.outputs_key, modules, batch, outputs)
             eyebrow_decomposer_output = self.get_output(
                 Network.eyebrow_decomposer.outputs_key, modules, batch, outputs)
             output = editor_output \
-                     + rotater_output \
-                     + face_morpher_output \
-                     + eyebrow_morphing_combiner_output \
-                     + eyebrow_decomposer_output
+                + rotater_output \
+                + face_morpher_output \
+                + eyebrow_morphing_combiner_output \
+                + eyebrow_decomposer_output
             return output
         else:
             raise RuntimeError("Unsupported key: " + key)
@@ -318,13 +338,16 @@ def create_poser(
 
     loaders = {
         Network.eyebrow_decomposer.name:
-            lambda: load_eyebrow_decomposer(module_file_names[Network.eyebrow_decomposer.name]),
+            lambda: load_eyebrow_decomposer(
+                module_file_names[Network.eyebrow_decomposer.name]),
         Network.eyebrow_morphing_combiner.name:
-            lambda: load_eyebrow_morphing_combiner(module_file_names[Network.eyebrow_morphing_combiner.name]),
+            lambda: load_eyebrow_morphing_combiner(
+                module_file_names[Network.eyebrow_morphing_combiner.name]),
         Network.face_morpher.name:
             lambda: load_face_morpher(module_file_names[Network.face_morpher.name]),
         Network.two_algo_face_body_rotator.name:
-            lambda: load_two_algo_generator(module_file_names[Network.two_algo_face_body_rotator.name]),
+            lambda: load_two_algo_generator(
+                module_file_names[Network.two_algo_face_body_rotator.name]),
         Network.editor.name:
             lambda: load_editor(module_file_names[Network.editor.name]),
     }
@@ -332,7 +355,8 @@ def create_poser(
         image_size=512,
         module_loaders=loaders,
         pose_parameters=get_pose_parameters().get_pose_parameter_groups(),
-        output_list_func=FiveStepPoserComputationProtocol(eyebrow_morphed_image_index).compute_func(),
+        output_list_func=FiveStepPoserComputationProtocol(
+            eyebrow_morphed_image_index).compute_func(),
         subrect=None,
         device=device,
         output_length=29,

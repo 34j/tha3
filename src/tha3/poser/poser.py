@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Tuple, List, Optional
+from typing import List, Optional, Tuple
 
 import torch
 from torch import Tensor

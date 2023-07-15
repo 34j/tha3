@@ -1,4 +1,4 @@
-from tha3.poser.poser import PoseParameters, PoseParameterCategory
+from tha3.poser.poser import PoseParameterCategory, PoseParameters
 
 
 def get_pose_parameters():

@@ -1,13 +1,16 @@
 import math
-from typing import Optional, List
+from typing import List, Optional
 
 import torch
 from torch import Tensor
-from torch.nn import ModuleList, Module
+from torch.nn import Module, ModuleList
 
 from tha3.nn.common.poser_args import PoserArgs00
-from tha3.nn.conv import create_conv3_block_from_block_args, create_downsample_block_from_block_args, \
-    create_upsample_block_from_block_args
+from tha3.nn.conv import (
+    create_conv3_block_from_block_args,
+    create_downsample_block_from_block_args,
+    create_upsample_block_from_block_args,
+)
 from tha3.nn.nonlinearity_factory import ReLUFactory
 from tha3.nn.normalization import InstanceNorm2dFactory
 from tha3.nn.resnet_block import ResnetBlock
@@ -19,7 +22,7 @@ class PoserEncoderDecoder00Args(PoserArgs00):
                  image_size: int,
                  input_image_channels: int,
                  output_image_channels: int,
-                 num_pose_params: int ,
+                 num_pose_params: int,
                  start_channels: int,
                  bottleneck_image_size,
                  num_bottleneck_blocks,
@@ -45,7 +48,8 @@ class PoserEncoderDecoder00(Module):
         super().__init__()
         self.args = args
 
-        self.num_levels = int(math.log2(args.image_size // args.bottleneck_image_size)) + 1
+        self.num_levels = int(
+            math.log2(args.image_size // args.bottleneck_image_size)) + 1
 
         self.downsample_blocks = ModuleList()
         self.downsample_blocks.append(
@@ -57,7 +61,8 @@ class PoserEncoderDecoder00(Module):
         current_num_channels = args.start_channels
         while current_image_size > args.bottleneck_image_size:
             next_image_size = current_image_size // 2
-            next_num_channels = self.get_num_output_channels_from_image_size(next_image_size)
+            next_num_channels = self.get_num_output_channels_from_image_size(
+                next_image_size)
             self.downsample_blocks.append(create_downsample_block_from_block_args(
                 in_channels=current_num_channels,
                 out_channels=next_num_channels,
@@ -82,7 +87,8 @@ class PoserEncoderDecoder00(Module):
         self.upsample_blocks = ModuleList()
         while current_image_size < args.image_size:
             next_image_size = current_image_size * 2
-            next_num_channels = self.get_num_output_channels_from_image_size(next_image_size)
+            next_num_channels = self.get_num_output_channels_from_image_size(
+                next_image_size)
             self.upsample_blocks.append(create_upsample_block_from_block_args(
                 in_channels=current_num_channels,
                 out_channels=next_num_channels,
@@ -109,7 +115,8 @@ class PoserEncoderDecoder00(Module):
             outputs.append(feature)
         if pose is not None:
             n, c = pose.shape
-            pose = pose.view(n, c, 1, 1).repeat(1, 1, self.args.bottleneck_image_size, self.args.bottleneck_image_size)
+            pose = pose.view(n, c, 1, 1).repeat(
+                1, 1, self.args.bottleneck_image_size, self.args.bottleneck_image_size)
             feature = torch.cat([feature, pose], dim=1)
         for block in self.bottleneck_blocks:
             feature = block(feature)

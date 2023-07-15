@@ -1,5 +1,5 @@
 import math
-from typing import Optional, List
+from typing import List, Optional
 
 import torch
 from torch import Tensor
@@ -38,17 +38,21 @@ class ResizeConvEncoderDecoder(Module):
         super().__init__()
         self.args = args
 
-        self.num_levels = int(math.log2(args.image_size // args.bottleneck_image_size)) + 1
+        self.num_levels = int(
+            math.log2(args.image_size // args.bottleneck_image_size)) + 1
 
-        conv_block_factory = ConvBlockFactory(args.block_args, args.use_separable_convolution)
+        conv_block_factory = ConvBlockFactory(
+            args.block_args, args.use_separable_convolution)
 
         self.downsample_blocks = ModuleList()
-        self.downsample_blocks.append(conv_block_factory.create_conv7_block(args.input_channels, args.start_channels))
+        self.downsample_blocks.append(conv_block_factory.create_conv7_block(
+            args.input_channels, args.start_channels))
         current_image_size = args.image_size
         current_num_channels = args.start_channels
         while current_image_size > args.bottleneck_image_size:
             next_image_size = current_image_size // 2
-            next_num_channels = self.get_num_output_channels_from_image_size(next_image_size)
+            next_num_channels = self.get_num_output_channels_from_image_size(
+                next_image_size)
             self.downsample_blocks.append(conv_block_factory.create_downsample_block(
                 in_channels=current_num_channels,
                 out_channels=next_num_channels,
@@ -59,7 +63,8 @@ class ResizeConvEncoderDecoder(Module):
 
         self.bottleneck_blocks = ModuleList()
         for i in range(args.num_bottleneck_blocks):
-            self.bottleneck_blocks.append(conv_block_factory.create_resnet_block(current_num_channels, is_1x1=False))
+            self.bottleneck_blocks.append(
+                conv_block_factory.create_resnet_block(current_num_channels, is_1x1=False))
 
         self.output_image_sizes = [current_image_size]
         self.output_num_channels = [current_num_channels]
@@ -70,10 +75,12 @@ class ResizeConvEncoderDecoder(Module):
             align_corners = False
         while current_image_size < args.image_size:
             next_image_size = current_image_size * 2
-            next_num_channels = self.get_num_output_channels_from_image_size(next_image_size)
+            next_num_channels = self.get_num_output_channels_from_image_size(
+                next_image_size)
             self.upsample_blocks.append(
                 Sequential(
-                    Upsample(scale_factor=2, mode=args.upsample_mode, align_corners=align_corners),
+                    Upsample(scale_factor=2, mode=args.upsample_mode,
+                             align_corners=align_corners),
                     conv_block_factory.create_conv3_block(
                         in_channels=current_num_channels, out_channels=next_num_channels)))
             current_image_size = next_image_size

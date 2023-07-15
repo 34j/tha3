@@ -4,7 +4,10 @@ from typing import Dict, List
 from torch import Tensor
 from torch.nn import Module
 
-from tha3.compute.cached_computation_func import TensorCachedComputationFunc, TensorListCachedComputationFunc
+from tha3.compute.cached_computation_func import (
+    TensorCachedComputationFunc,
+    TensorListCachedComputationFunc,
+)
 
 
 class CachedComputationProtocol(ABC):

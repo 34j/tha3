@@ -1,14 +1,17 @@
-from typing import Optional, List
+from typing import List, Optional
 
 import torch
 from torch import Tensor
 from torch.nn import Module, Sequential, Tanh
 
-from tha3.nn.image_processing_util import GridChangeApplier
-from tha3.nn.common.resize_conv_encoder_decoder import ResizeConvEncoderDecoder, ResizeConvEncoderDecoderArgs
 from tha3.module.module_factory import ModuleFactory
-from tha3.nn.conv import create_conv3_from_block_args, create_conv3
-from tha3.nn.nonlinearity_factory import ReLUFactory, LeakyReLUFactory
+from tha3.nn.common.resize_conv_encoder_decoder import (
+    ResizeConvEncoderDecoder,
+    ResizeConvEncoderDecoderArgs,
+)
+from tha3.nn.conv import create_conv3, create_conv3_from_block_args
+from tha3.nn.image_processing_util import GridChangeApplier
+from tha3.nn.nonlinearity_factory import LeakyReLUFactory, ReLUFactory
 from tha3.nn.normalization import InstanceNorm2dFactory
 from tha3.nn.util import BlockArgs
 
@@ -76,7 +79,8 @@ class TwoAlgoFaceBodyRotator05(Module):
 
     def forward(self, image: Tensor, pose: Tensor, *args) -> List[Tensor]:
         n, c = pose.shape
-        pose = pose.view(n, c, 1, 1).repeat(1, 1, self.args.image_size, self.args.image_size)
+        pose = pose.view(n, c, 1, 1).repeat(
+            1, 1, self.args.image_size, self.args.image_size)
         feature = torch.cat([image, pose], dim=1)
 
         feature = self.encoder_decoder.forward(feature)[-1]

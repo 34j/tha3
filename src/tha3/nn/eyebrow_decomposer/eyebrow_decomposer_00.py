@@ -4,9 +4,12 @@ import torch
 from torch import Tensor
 from torch.nn import Module
 
-from tha3.nn.common.poser_encoder_decoder_00 import PoserEncoderDecoder00Args, PoserEncoderDecoder00
-from tha3.nn.image_processing_util import apply_color_change
 from tha3.module.module_factory import ModuleFactory
+from tha3.nn.common.poser_encoder_decoder_00 import (
+    PoserEncoderDecoder00,
+    PoserEncoderDecoder00Args,
+)
+from tha3.nn.image_processing_util import apply_color_change
 from tha3.nn.nonlinearity_factory import ReLUFactory
 from tha3.nn.normalization import InstanceNorm2dFactory
 from tha3.nn.util import BlockArgs
@@ -48,11 +51,13 @@ class EyebrowDecomposer00(Module):
 
         background_layer_alpha = self.background_layer_alpha(feature)
         background_layer_color_change = self.background_layer_color_change(feature)
-        background_layer_1 = apply_color_change(background_layer_alpha, background_layer_color_change, image)
+        background_layer_1 = apply_color_change(
+            background_layer_alpha, background_layer_color_change, image)
 
         eyebrow_layer_alpha = self.eyebrow_layer_alpha(feature)
         eyebrow_layer_color_change = self.eyebrow_layer_color_change(feature)
-        eyebrow_layer = apply_color_change(eyebrow_layer_alpha, image, eyebrow_layer_color_change)
+        eyebrow_layer = apply_color_change(
+            eyebrow_layer_alpha, image, eyebrow_layer_color_change)
 
         return [
             eyebrow_layer,  # 0

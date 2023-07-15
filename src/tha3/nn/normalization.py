@@ -3,8 +3,8 @@ from typing import Optional
 
 import torch
 from torch import layer_norm
-from torch.nn import Module, BatchNorm2d, InstanceNorm2d, Parameter
-from torch.nn.init import normal_, constant_
+from torch.nn import BatchNorm2d, InstanceNorm2d, Module, Parameter
+from torch.nn.init import constant_, normal_
 
 from tha3.nn.pass_through import PassThrough
 
@@ -105,7 +105,7 @@ class PixelNormFactory(NormalizationLayerFactory):
 
 class LayerNorm2d(Module):
     def __init__(self, channels: int, affine: bool = True):
-        super(LayerNorm2d, self).__init__()
+        super().__init__()
         self.channels = channels
         self.affine = affine
 
@@ -117,6 +117,7 @@ class LayerNorm2d(Module):
         shape = x.size()[1:]
         y = layer_norm(x, shape) * self.weight + self.bias
         return y
+
 
 class LayerNorm2dFactory(NormalizationLayerFactory):
     def __init__(self):

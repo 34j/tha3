@@ -1,18 +1,18 @@
-from typing import Optional, List
+from typing import List, Optional
 
 import torch
 from matplotlib import pyplot
 from torch import Tensor
-from torch.nn import Module, Sequential, Tanh, Sigmoid
+from torch.nn import Module, Sequential, Sigmoid, Tanh
 
-from tha3.nn.image_processing_util import GridChangeApplier, apply_color_change
-from tha3.nn.common.resize_conv_unet import ResizeConvUNet, ResizeConvUNetArgs
-from tha3.util import numpy_linear_to_srgb
 from tha3.module.module_factory import ModuleFactory
-from tha3.nn.conv import create_conv3_from_block_args, create_conv3
+from tha3.nn.common.resize_conv_unet import ResizeConvUNet, ResizeConvUNetArgs
+from tha3.nn.conv import create_conv3, create_conv3_from_block_args
+from tha3.nn.image_processing_util import GridChangeApplier, apply_color_change
 from tha3.nn.nonlinearity_factory import ReLUFactory
 from tha3.nn.normalization import InstanceNorm2dFactory
 from tha3.nn.util import BlockArgs
+from tha3.util import numpy_linear_to_srgb
 
 
 class Editor07Args:
@@ -88,16 +88,20 @@ class Editor07(Module):
                 pose: Tensor,
                 *args) -> List[Tensor]:
         n, c = pose.shape
-        pose = pose.view(n, c, 1, 1).repeat(1, 1, self.args.image_size, self.args.image_size)
-        feature = torch.cat([input_original_image, input_warped_image, input_grid_change, pose], dim=1)
+        pose = pose.view(n, c, 1, 1).repeat(
+            1, 1, self.args.image_size, self.args.image_size)
+        feature = torch.cat(
+            [input_original_image, input_warped_image, input_grid_change, pose], dim=1)
 
         feature = self.body.forward(feature)[-1]
         output_grid_change = input_grid_change + self.grid_change_creator(feature)
 
         output_color_change = self.color_change_creator(feature)
         output_color_change_alpha = self.alpha_creator(feature)
-        output_warped_image = self.grid_change_applier.apply(output_grid_change, input_original_image)
-        output_color_changed = apply_color_change(output_color_change_alpha, output_color_change, output_warped_image)
+        output_warped_image = self.grid_change_applier.apply(
+            output_grid_change, input_original_image)
+        output_color_changed = apply_color_change(
+            output_color_change_alpha, output_color_change, output_warped_image)
 
         return [
             output_color_changed,

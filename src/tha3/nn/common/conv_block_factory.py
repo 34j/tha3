@@ -1,11 +1,19 @@
 from typing import Optional
 
-from tha3.nn.conv import create_conv7_block_from_block_args, create_conv3_block_from_block_args, \
-    create_downsample_block_from_block_args, create_conv3
+from tha3.nn.conv import (
+    create_conv3,
+    create_conv3_block_from_block_args,
+    create_conv7_block_from_block_args,
+    create_downsample_block_from_block_args,
+)
 from tha3.nn.resnet_block import ResnetBlock
 from tha3.nn.resnet_block_seperable import ResnetBlockSeparable
-from tha3.nn.separable_conv import create_separable_conv7_block, create_separable_conv3_block, \
-    create_separable_downsample_block, create_separable_conv3
+from tha3.nn.separable_conv import (
+    create_separable_conv3,
+    create_separable_conv3_block,
+    create_separable_conv7_block,
+    create_separable_downsample_block,
+)
 from tha3.nn.util import BlockArgs
 
 

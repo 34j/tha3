@@ -3,13 +3,17 @@ from typing import List, Optional
 
 import torch
 from torch import Tensor
-from torch.nn import ModuleList, Sequential, Sigmoid, Tanh, Module
+from torch.nn import Module, ModuleList, Sequential, Sigmoid, Tanh
 from torch.nn.functional import affine_grid, grid_sample
 
 from tha3.module.module_factory import ModuleFactory
-from tha3.nn.conv import create_conv3_block_from_block_args, \
-    create_downsample_block_from_block_args, create_upsample_block_from_block_args, create_conv3_from_block_args, \
-    create_conv3
+from tha3.nn.conv import (
+    create_conv3,
+    create_conv3_block_from_block_args,
+    create_conv3_from_block_args,
+    create_downsample_block_from_block_args,
+    create_upsample_block_from_block_args,
+)
 from tha3.nn.nonlinearity_factory import LeakyReLUFactory
 from tha3.nn.normalization import InstanceNorm2dFactory
 from tha3.nn.resnet_block import ResnetBlock
@@ -47,7 +51,8 @@ class FaceMorpher08(Module):
     def __init__(self, args: FaceMorpher08Args):
         super().__init__()
         self.args = args
-        self.num_levels = int(math.log2(args.image_size // args.bottleneck_image_size)) + 1
+        self.num_levels = int(
+            math.log2(args.image_size // args.bottleneck_image_size)) + 1
 
         self.downsample_blocks = ModuleList()
         self.downsample_blocks.append(
@@ -59,7 +64,8 @@ class FaceMorpher08(Module):
         current_num_channels = args.start_channels
         while current_image_size > args.bottleneck_image_size:
             next_image_size = current_image_size // 2
-            next_num_channels = self.get_num_output_channels_from_image_size(next_image_size)
+            next_num_channels = self.get_num_output_channels_from_image_size(
+                next_image_size)
             self.downsample_blocks.append(create_downsample_block_from_block_args(
                 in_channels=current_num_channels,
                 out_channels=next_num_channels,
@@ -84,7 +90,8 @@ class FaceMorpher08(Module):
         self.upsample_blocks = ModuleList()
         while current_image_size < args.image_size:
             next_image_size = current_image_size * 2
-            next_num_channels = self.get_num_output_channels_from_image_size(next_image_size)
+            next_num_channels = self.get_num_output_channels_from_image_size(
+                next_image_size)
             self.upsample_blocks.append(create_upsample_block_from_block_args(
                 in_channels=current_num_channels,
                 out_channels=next_num_channels,
@@ -140,14 +147,16 @@ class FaceMorpher08(Module):
     def apply_grid_change(self, grid_change, image: Tensor) -> Tensor:
         n, c, h, w = image.shape
         device = grid_change.device
-        grid_change = torch.transpose(grid_change.view(n, 2, h * w), 1, 2).view(n, h, w, 2)
+        grid_change = torch.transpose(
+            grid_change.view(n, 2, h * w), 1, 2).view(n, h, w, 2)
         identity = torch.tensor(
             [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
             device=device,
             dtype=grid_change.dtype).unsqueeze(0).repeat(n, 1, 1)
         base_grid = affine_grid(identity, [n, c, h, w], align_corners=False)
         grid = base_grid + grid_change
-        resampled_image = grid_sample(image, grid, mode='bilinear', padding_mode='border', align_corners=False)
+        resampled_image = grid_sample(
+            image, grid, mode='bilinear', padding_mode='border', align_corners=False)
         return resampled_image
 
     def apply_color_change(self, alpha, color_change, image: Tensor) -> Tensor:
@@ -158,7 +167,8 @@ class FaceMorpher08(Module):
         for block in self.downsample_blocks:
             feature = block(feature)
         n, c = pose.shape
-        pose = pose.view(n, c, 1, 1).repeat(1, 1, self.args.bottleneck_image_size, self.args.bottleneck_image_size)
+        pose = pose.view(n, c, 1, 1).repeat(
+            1, 1, self.args.bottleneck_image_size, self.args.bottleneck_image_size)
         feature = torch.cat([feature, pose], dim=1)
         for block in self.bottleneck_blocks:
             feature = block(feature)
@@ -169,20 +179,22 @@ class FaceMorpher08(Module):
         iris_mouth_image_0 = self.apply_grid_change(iris_mouth_grid_change, image)
         iris_mouth_color_change = self.iris_mouth_color_change(feature)
         iris_mouth_alpha = self.iris_mouth_alpha(feature)
-        iris_mouth_image_1 = self.apply_color_change(iris_mouth_alpha, iris_mouth_color_change, iris_mouth_image_0)
+        iris_mouth_image_1 = self.apply_color_change(
+            iris_mouth_alpha, iris_mouth_color_change, iris_mouth_image_0)
 
         eye_color_change = self.eye_color_change(feature)
         eye_alpha = self.eye_alpha(feature)
-        output_image = self.apply_color_change(eye_alpha, eye_color_change, iris_mouth_image_1.detach())
+        output_image = self.apply_color_change(
+            eye_alpha, eye_color_change, iris_mouth_image_1.detach())
 
         return [
-            output_image, #0
-            eye_alpha, #1
-            eye_color_change, #2
-            iris_mouth_image_1, #3
-            iris_mouth_alpha, #4
-            iris_mouth_color_change, #5
-            iris_mouth_image_0, #6
+            output_image,  # 0
+            eye_alpha,  # 1
+            eye_color_change,  # 2
+            iris_mouth_image_1,  # 3
+            iris_mouth_alpha,  # 4
+            iris_mouth_color_change,  # 5
+            iris_mouth_image_0,  # 6
         ]
 
     OUTPUT_IMAGE_INDEX = 0

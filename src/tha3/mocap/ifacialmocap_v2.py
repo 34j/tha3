@@ -1,11 +1,23 @@
 import math
 
-from tha3.mocap.ifacialmocap_constants import BLENDSHAPE_NAMES, HEAD_BONE_X, HEAD_BONE_Y, HEAD_BONE_Z, \
-    RIGHT_EYE_BONE_X, RIGHT_EYE_BONE_Y, RIGHT_EYE_BONE_Z, LEFT_EYE_BONE_X, LEFT_EYE_BONE_Y, LEFT_EYE_BONE_Z, \
-    HEAD_BONE_QUAT, LEFT_EYE_BONE_QUAT, RIGHT_EYE_BONE_QUAT
+from tha3.mocap.ifacialmocap_constants import (
+    BLENDSHAPE_NAMES,
+    HEAD_BONE_QUAT,
+    HEAD_BONE_X,
+    HEAD_BONE_Y,
+    HEAD_BONE_Z,
+    LEFT_EYE_BONE_QUAT,
+    LEFT_EYE_BONE_X,
+    LEFT_EYE_BONE_Y,
+    LEFT_EYE_BONE_Z,
+    RIGHT_EYE_BONE_QUAT,
+    RIGHT_EYE_BONE_X,
+    RIGHT_EYE_BONE_Y,
+    RIGHT_EYE_BONE_Z,
+)
 
 IFACIALMOCAP_PORT = 49983
-IFACIALMOCAP_START_STRING = "iFacialMocap_sahuasouryya9218sauhuiayeta91555dy3719|sendDataVersion=v2".encode('utf-8')
+IFACIALMOCAP_START_STRING = b"iFacialMocap_sahuasouryya9218sauhuiayeta91555dy3719|sendDataVersion=v2"
 
 
 def parse_ifacialmocap_v2_pose(ifacialmocap_output):
@@ -86,4 +98,3 @@ def parse_ifacialmocap_v1_pose(ifacialmocap_output):
     output[LEFT_EYE_BONE_QUAT] = [0.0, 0.0, 0.0, 1.0]
     output[RIGHT_EYE_BONE_QUAT] = [0.0, 0.0, 0.0, 1.0]
     return output
-

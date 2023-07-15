@@ -1,4 +1,4 @@
-from typing import Optional, Callable, Union
+from typing import Callable, Optional, Union
 
 from torch.nn import Module
 

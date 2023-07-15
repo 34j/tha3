@@ -1,6 +1,6 @@
 from typing import Optional
 
-from torch.nn import Sigmoid, Sequential, Tanh
+from torch.nn import Sequential, Sigmoid, Tanh
 
 from tha3.nn.conv import create_conv3, create_conv3_from_block_args
 from tha3.nn.nonlinearity_factory import ReLUFactory

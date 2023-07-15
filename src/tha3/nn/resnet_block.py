@@ -1,7 +1,7 @@
 from typing import Optional
 
 import torch
-from torch.nn import Module, Sequential, Parameter
+from torch.nn import Module, Parameter, Sequential
 
 from tha3.module.module_factory import ModuleFactory
 from tha3.nn.conv import create_conv1, create_conv3
@@ -53,7 +53,8 @@ class ResnetBlock(Module):
                 create_conv3(num_channels, num_channels,
                              bias=False, initialization_method=initialization_method,
                              use_spectral_norm=use_spectral_norm),
-                NormalizationLayerFactory.resolve_2d(normalization_layer_factory).create(num_channels, affine=True),
+                NormalizationLayerFactory.resolve_2d(
+                    normalization_layer_factory).create(num_channels, affine=True),
                 nonlinearity_factory.create(),
                 create_conv3(num_channels, num_channels,
                              bias=False, initialization_method=initialization_method,
