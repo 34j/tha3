@@ -453,7 +453,7 @@ class MainFrame(wx.Frame):
         self.Refresh()
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description='Control characters with movement captured by iFacialMocap.')
     parser.add_argument(

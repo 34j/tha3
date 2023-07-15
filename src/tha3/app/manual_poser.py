@@ -471,7 +471,7 @@ class MainFrame(wx.Frame):
         pil_image.save(image_file_name)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='Manually pose a character image.')
     parser.add_argument(
         '--model',

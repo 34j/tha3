@@ -18,6 +18,10 @@ packages = [
     { include = "tha3", from = "src" },
 ]
 
+[tool.poetry.scripts]
+tha3 = "tha3.app.manual_poser:main"
+tha3i = "tha3.app.ifacialmocap_puppeteer:main"
+
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/34j/tha3/issues"
 "Changelog" = "https://github.com/34j/tha3/blob/main/CHANGELOG.md"
@@ -26,6 +30,7 @@ packages = [
 python = "^3.8"
 wxpython = "^4.2.1"
 torch = "^2.0.1"
+matplotlib = "^3.7.2"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=3"
