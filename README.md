@@ -30,7 +30,8 @@
   <img src="https://img.shields.io/pypi/l/tha3.svg?style=flat-square" alt="License">
 </p>
 
-Python package for tha3
+A Python package to more easily install [pkhungurn/talking\-head\-anime\-3\-demo](https://github.com/pkhungurn/talking-head-anime-3-demo) and use Python APIs.
+The package ships with the officially distributed `seperated_float` model (only) by default.
 
 ## Installation
 
@@ -38,13 +39,14 @@ Install this via pipx or pip (or your favourite package manager):
 
 ```shell
 pipx install tha3
-pipx inject tha3 torch --index-url https://download.pytorch.org/whl/cu118 --pip-args "--upgrade"
+pipx inject tha3 torch --index-url https://download.pytorch.org/whl/cu118 --pip-args="--upgrade"
 ```
 
 ## Usage
 
 ```shell
-tha3
+tha3 # manual poser
+tha3i # iFacialMocap Puppeteer
 ```
 
 ## Contributors ✨
