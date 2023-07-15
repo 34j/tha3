@@ -138,4 +138,4 @@ dependencies:
   - zlib=1.2.12=h8cc25b3_2
   - zstd=1.5.2=h19a0ad4_0
   - pip:
-    - wxpython==4.1.1
+      - wxpython==4.1.1
