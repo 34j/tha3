@@ -1,5 +1,6 @@
 import math
 import os
+from pathlib import Path
 from typing import List
 
 import numpy
@@ -256,13 +257,14 @@ def save_pytorch_image(image, file_name):
 
 
 def torch_load(file_name):
-    with open(file_name, 'rb') as f:
+    with (Path(__file__).parent / file_name).open('rb') as f:
         return torch.load(f)
 
 
 def torch_save(content, file_name):
-    os.makedirs(os.path.dirname(file_name), exist_ok=True)
-    with open(file_name, 'wb') as f:
+    path = Path(__file__).parent / file_name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('wb') as f:
         torch.save(content, f)
 
 

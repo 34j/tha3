@@ -477,7 +477,7 @@ def main():
         '--model',
         type=str,
         required=False,
-        default='standard_float',
+        default='separable_float',
         choices=['standard_float', 'separable_float',
                  'standard_half', 'separable_half'],
         help='The model to use.')
