@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.1 (2023-07-15)
+
+### Fix
+
+* **license:** Fix wrong license ([#2](https://github.com/34j/tha3/issues/2)) ([`deb3ea3`](https://github.com/34j/tha3/commit/deb3ea3c1319e278411652f5bcf8f353487fae53))
+
 ## v0.1.0 (2023-07-15)
 
 ### Feature
