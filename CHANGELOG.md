@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.7 (2024-01-30)
+
+### Fix
+
+* **deps:** Update dependency torch to v2.2.0 ([#46](https://github.com/34j/tha3/issues/46)) ([`3f90315`](https://github.com/34j/tha3/commit/3f903156d44bb4b9cb1d15deb2ceeb8fcbcc86d1))
+
 ## v0.1.6 (2023-12-15)
 
 ### Fix
