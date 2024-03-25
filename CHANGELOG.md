@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.9 (2024-03-25)
+
+### Fix
+
+* **deps:** Update dependency matplotlib to v3.8.3 ([#57](https://github.com/34j/tha3/issues/57)) ([`cbc99ff`](https://github.com/34j/tha3/commit/cbc99ff3fd37dce351988f02bdd3a2d211ce87be))
+
 ## v0.1.8 (2024-03-25)
 
 ### Fix
